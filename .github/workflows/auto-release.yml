@@ -32,5 +32,5 @@ jobs:
           tag: ${{ env.version }}
           name: Release ${{ env.version }}
           draft: false
-          prerelease: true
+          prerelease: false
           generateReleaseNotes: true
