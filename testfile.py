@@ -1,1 +1,1 @@
-variable = "string"
+variable = "string
