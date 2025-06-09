@@ -1,0 +1,57 @@
+name: Cherry Pick Into _v2 Branch
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_branch:
+        description: 'The original feature branch (e.g., feature/BUG-123)'
+        required: true
+      commit_sha:
+        description: 'The commit SHA to cherry-pick'
+        required: true
+
+jobs:
+  cherry-pick:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Define _v2 branch
+        id: vars
+        run: |
+          v2_branch="${{ github.event.inputs.source_branch }}_v2"
+          echo "v2_branch=$v2_branch" >> $GITHUB_OUTPUT
+
+      - name: Fetch all branches
+        run: git fetch --all
+
+      - name: Create or checkout _v2 branch
+        run: |
+          if git ls-remote --heads origin "${{ steps.vars.outputs.v2_branch }}" | grep "${{ steps.vars.outputs.v2_branch }}"; then
+            echo "_v2 branch exists. Checking it out."
+            git checkout "${{ steps.vars.outputs.v2_branch }}"
+            git pull origin "${{ steps.vars.outputs.v2_branch }}"
+          else
+            echo "_v2 branch does not exist. Creating from ${{ github.event.inputs.source_branch }}"
+            git checkout origin/${{ github.event.inputs.source_branch }}
+            git checkout -b "${{ steps.vars.outputs.v2_branch }}"
+          fi
+
+      - name: Cherry-pick commit
+        run: |
+          git cherry-pick ${{ github.event.inputs.commit_sha }}
+
+      - name: Push _v2 branch
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git push https://x-access-token:${TOKEN}@github.com/${{ github.repository }} "${{ steps.vars.outputs.v2_branch }}"
