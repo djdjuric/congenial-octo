@@ -1,0 +1,44 @@
+name: Enforce Documentation Update
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main  # or 'master' or your main branch
+
+jobs:
+  check_documentation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # This is crucial for comparing branches
+
+      - name: Check for changes in the 'src/' folder
+        id: src_check
+        run: |
+          if git diff --quiet ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} -- src/; then
+            echo "No changes in 'src/'. Skipping doc check."
+            echo "::set-output name=src_changed::false"
+          else
+            echo "Changes detected in 'src/'."
+            echo "::set-output name=src_changed::true"
+          fi
+          
+      - name: Check for changes in the 'docs/' folder
+        id: docs_check
+        run: |
+          if git diff --quiet ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} -- docs/; then
+            echo "No changes in 'docs/'."
+            echo "::set-output name=docs_changed::false"
+          else
+            echo "Changes detected in 'docs/'."
+            echo "::set-output name=docs_changed::true"
+          fi
+      
+      - name: Fail if documentation is not updated
+        if: steps.src_check.outputs.src_changed == 'true' && steps.docs_check.outputs.docs_changed == 'false'
+        run: |
+          echo "::error::Changes were made to the 'src/' folder, but the 'docs/' folder was not updated. Please update the documentation to proceed."
+          exit 1
