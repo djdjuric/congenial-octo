@@ -1,0 +1,26 @@
+name: CI/CD Pipeline
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and Push Artifact
+        run: echo "Building version ${{ github.sha }}..."
+
+  deploy-staging:
+    needs: build
+    uses: ./.github/workflows/_deploy.yml
+    with:
+      environment: staging  
+    secrets: inherit
+
+  deploy-production:
+    needs: deploy-staging
+    uses: ./.github/workflows/_deploy.yml
+    with:
+      environment: production
+    secrets: inherit
