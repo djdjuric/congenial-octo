@@ -1,0 +1,19 @@
+name: 🚀 Deploy Template
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }} 
+    steps:
+      - name: Deploying to ${{ inputs.environment }}
+        run: |
+          echo "Fetching secrets for ${{ inputs.environment }}..."
+          # Your actual deployment commands here (e.g., helm upgrade, aws ecs, etc.)
+          echo "Deploying artifact: ${{ github.sha }}"
+          echo "bash deploy.sh $env"
