@@ -1,2 +1,2 @@
 variable = "string"
-number = 7
+number = 77
